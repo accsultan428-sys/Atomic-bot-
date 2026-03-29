@@ -26,7 +26,7 @@ import {
   User,
 }                                       from "discord.js"
 import { logger, component, format }    from "../../utils"
-import { track_deleted_message }        from "../../../atomic_bot/infrastructure/cache/snipe"
+import { track_deleted_message }        from "../../../atomic_bot/integrations/cache/snipe"
 
 const log                  = logger.create_logger("audit_log")
 const __log_channel_id     = "1452086939866894420"
