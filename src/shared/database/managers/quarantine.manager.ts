@@ -112,6 +112,14 @@ export async function get_guild_quarantines(guild_id: string): Promise<quarantin
 }
 
 /**
+ * @description get all quarantined members across all guilds (used by startup rescan)
+ * @returns Promise with array of all quarantined members
+ */
+export async function get_all_quarantines(): Promise<quarantined_member[]> {
+  return db.find_many<quarantined_member>(__collection, {})
+}
+
+/**
  * @description get all members quarantined by the auto tag guard
  * @param guild_id - Discord guild ID
  * @returns Promise with array of auto-tag-quarantined members

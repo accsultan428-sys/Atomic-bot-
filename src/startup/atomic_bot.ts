@@ -36,7 +36,7 @@ import { start_scheduler }                                               from "@
 import { start_weekly_reset_scheduler }                                  from "@atomic/features/commands/staff-management/work/jobs/weekly_work_reset.job"
 import { start_quarantine_scheduler }                                    from "@atomic/features/commands/moderation/quarantine/jobs/quarantine_release.job"
 import { start_tag_quarantine_checker }                                  from "@atomic/features/commands/moderation/quarantine/jobs/tag_quarantine_checker.job"
-import { is_quarantined }                                                from "@shared/database/managers/quarantine.manager"
+import { is_quarantined, get_all_quarantines }                          from "@shared/database/managers/quarantine.manager"
 import { start_account_tracker_offline_checker }                         from "@atomic/features/commands/server-util/account-tracker/jobs/account_tracker_offline.job"
 import { load_middleman_tickets_on_startup }                             from "@atomic/features/commands/commerce/middleman/jobs/load_middleman_tickets.job"
 import { start_share_settings_forum_scheduler }                          from "@atomic/features/commands/commerce/share-settings/jobs/share_settings_forum.job"
@@ -279,6 +279,42 @@ client.once("ready", async () => {
       start_tag_quarantine_checker(client)
       start_account_tracker_offline_checker(client)
       scan_banned_tags_on_startup(client).catch(() => {})
+
+      // - 启动时扫描所有被隔离成员，若缺少隔离角色则立即重新应用 - \\
+      // - on startup rescan all quarantined members and re-apply quarantine role if missing - \\
+      const __startup_quarantine_role = process.env.QUARANTINE_ROLE_ID ?? "1265318689130024992"
+      get_all_quarantines().then(async (records) => {
+        for (const record of records) {
+          try {
+            const guild = await client.guilds.fetch(record.guild_id).catch(() => null)
+            if (!guild) continue
+
+            const member = await guild.members.fetch(record.user_id).catch(() => null)
+            if (!member) continue
+
+            // - 成员已有隔离角色，无需处理 - \\
+            // - member already has quarantine role, skip - \\
+            const has_quarantine = member.roles.cache.has(__startup_quarantine_role)
+            if (has_quarantine) continue
+
+            const managed_roles = member.roles.cache
+              .filter(r => r.managed || r.id === guild.id)
+              .map(r => r.id)
+
+            await member.roles.set(
+              [...managed_roles, __startup_quarantine_role],
+              "Startup quarantine rescan: quarantine role was missing"
+            ).catch(() => {})
+
+            console.log(`[ - QUARANTINE RESCAN - ] re-applied quarantine for ${member.user.tag}`)
+          } catch (err) {
+            await log_error(client, err as Error, "Startup Quarantine Rescan", {
+              user_id  : record.user_id,
+              guild_id : record.guild_id,
+            }).catch(() => {})
+          }
+        }
+      }).catch(() => {})
       start_free_script_checker(client)
       start_service_provider_cache(client)
       start_share_settings_forum_scheduler(client)
