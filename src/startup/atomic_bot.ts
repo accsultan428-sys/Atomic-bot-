@@ -44,6 +44,7 @@ import * as share_settings                                               from "@
 import { recover_active_sessions }                                       from "@atomic/features/commands/staff-management/staff/controller/staff_voice.controller"
 import { init_shoukaku }                                                 from "@atomic/integrations/lavalink/shoukaku"
 import { handle_music_prefix_command }                                   from "@atomic/features/commands/media/music/controller/prefix.controller"
+import { handle_security_automod_message }                               from "@atomic/features/commands/moderation/security/controller/security_automod.controller"
 
 config()
 
@@ -459,6 +460,7 @@ client.on("messageCreate", async (message: Message) => {
   ])
 
   if (check_spam(message, client)) return
+  if (await handle_security_automod_message(message, client)) return
 
   // - 音乐命令前缀 (a!play, a!skip, a!stop, a!pause, a!resume, a!queue) - \\
   // - music prefix commands (a!play, a!skip, a!stop, a!pause, a!resume, a!queue) - \\

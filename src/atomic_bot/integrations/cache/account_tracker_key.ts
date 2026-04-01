@@ -1,4 +1,4 @@
-/*
+ /*
  * Atomicals Bot for Discord
  * Copyright (C) 2026 Atomicals LancarJaya
  *
