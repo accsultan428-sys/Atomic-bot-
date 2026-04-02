@@ -8,15 +8,8 @@
  */
 
 // - 所有交互的总调度中心，按钮、弹窗、菜单全从这分发 - \\
-// - main interaction dispatcher, where all the action starts - \\
-// - 简单说，这就是机器人所有交互（Interaction）的「十字路口」。
-// - 无论是点按钮、填表单、还是选菜单，全都得经过这个「大管家」来路由到对应的功能模块。
-// - 这样做虽然代码长点，但管理起来贼方便，所有的功能子路由都在这 import 挂载，稳如老狗。
-// - alias: "全能交互中心" / "the boss router for everything"
-// - shoutout to @_lyi for the logic rewrite btw.
-
-
-// - Big thanks to @_lyi krna udh udh ngerewrite ini
+// - main interaction dispatcher, all buttons/modals/selects get dispatched from here - \\
+// - thanks to @_lyi for the logic rewrite - \\
 import {
   Client,
   Collection,
@@ -36,10 +29,10 @@ import {
   handle_ticket_user_select,
 }                                                            from "@shared/database/unified_ticket"
 
-import { run_middleware }                                    from "@shared/middleware/runner"
-import { error_handler }                                     from "@shared/middleware/error.handler"
-import { handle_role_permission_select }                     from "@atomic/features/commands/server-util/utility/get_role_permission.commands"
-import { get_button_module, get_modal_module, get_select_menu_module }  from "./interaction-registry"
+import { run_middleware }                                                  from "@shared/middleware/runner"
+import { error_handler }                                                  from "@shared/middleware/error.handler"
+import { handle_role_permission_select }                                   from "@atomic/features/commands/server-util/utility/get_role_permission.commands"
+import { get_button_module, get_modal_module, get_select_menu_module }     from "./interaction-registry"
 
 const stats_select           = get_select_menu_module("stats")
 const guide_select           = get_select_menu_module("guide")
@@ -52,40 +45,47 @@ const work_select            = get_select_menu_module("work")
 const version_select         = get_select_menu_module("version")
 const account_tracker_select = get_select_menu_module("account-tracker")
 
-const ask_buttons = get_button_module("ask")
-const community_buttons = get_button_module("community")
-const close_request_buttons = get_button_module("close-request")
-const reaction_role_buttons = get_button_module("reaction-roles")
-const payment_buttons = get_button_module("payment")
-const guide_buttons = get_button_module("guide")
-const scripts_buttons = get_button_module("scripts")
-const free_scripts_buttons = get_button_module("free-scripts")
-const work_buttons = get_button_module("work")
-const tempvoice_buttons = get_button_module("tempvoice")
-const reminder_buttons = get_button_module("reminder")
-const loa_buttons = get_button_module("loa")
-const booster_buttons = get_button_module("booster")
-const quarantine_buttons = get_button_module("quarantine")
-const av_checker_buttons = get_button_module("av-checker")
-const middleman_buttons = get_button_module("middleman")
+const ask_buttons            = get_button_module("ask")
+const community_buttons      = get_button_module("community")
+const close_request_buttons  = get_button_module("close-request")
+const reaction_role_buttons  = get_button_module("reaction-roles")
+const payment_buttons        = get_button_module("payment")
+const guide_buttons          = get_button_module("guide")
+const scripts_buttons        = get_button_module("scripts")
+const free_scripts_buttons   = get_button_module("free-scripts")
+const work_buttons           = get_button_module("work")
+const tempvoice_buttons      = get_button_module("tempvoice")
+const reminder_buttons       = get_button_module("reminder")
+const loa_buttons            = get_button_module("loa")
+const booster_buttons        = get_button_module("booster")
+const quarantine_buttons     = get_button_module("quarantine")
+const av_checker_buttons     = get_button_module("av-checker")
+const middleman_buttons      = get_button_module("middleman")
 const share_settings_buttons = get_button_module("share-settings")
-const staff_info_buttons = get_button_module("staff-info")
-const music_buttons = get_button_module("music")
+const staff_info_buttons     = get_button_module("staff-info")
+const music_buttons          = get_button_module("music")
 
-const staff_modal = get_modal_module("staff")
-const ask_modal = get_modal_module("ask")
-const loa_modal = get_modal_module("loa")
-const server_modal = get_modal_module("server")
-const reminder_modal = get_modal_module("reminder")
-const scripts_modal = get_modal_module("scripts")
-const tempvoice_modal = get_modal_module("tempvoice")
-const community_modal = get_modal_module("community")
-const middleman_modal = get_modal_module("middleman")
+const staff_modal          = get_modal_module("staff")
+const ask_modal            = get_modal_module("ask")
+const loa_modal            = get_modal_module("loa")
+const server_modal         = get_modal_module("server")
+const reminder_modal       = get_modal_module("reminder")
+const scripts_modal        = get_modal_module("scripts")
+const tempvoice_modal      = get_modal_module("tempvoice")
+const community_modal      = get_modal_module("community")
+const middleman_modal      = get_modal_module("middleman")
 const share_settings_modal = get_modal_module("share-settings")
-const staff_info_modal = get_modal_module("staff-info")
+const staff_info_modal     = get_modal_module("staff-info")
 
 // - 反垃圾按钮逻辑，太小了就懒得单开一个文件了 - \\
 // - anti spam button logic, too small for its own file - \\
+
+/**
+ * @description handles anti-spam action buttons (untimeout, ban, download)
+ * @param {ButtonInteraction} interaction - the button interaction
+ * @param {Client} client - discord client for error logging
+ * @returns {Promise<void>}
+ */
 async function handle_anti_spam_button(interaction: ButtonInteraction, client: Client): Promise<void> {
   try {
     const parts      = interaction.customId.split(":")

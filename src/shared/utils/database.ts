@@ -1075,51 +1075,49 @@ export async function update_one<T extends object>(
   const table = get_table_name(coll)
 
   if (table === "generic_data") {
-    const filter_entries = Object.entries(filter)
+    const filter_entries    = Object.entries(filter)
     const filter_conditions = filter_entries
       .map(([key], index) => `data->>'${key}' = $${index + 2}`)
       .join(" AND ")
 
-    const existing_query = `SELECT id, data FROM generic_data WHERE collection = $1 ${filter_conditions ? "AND " + filter_conditions : ""} LIMIT 1`
-    const existing_result = await get_pool().query(existing_query, [coll, ...filter_entries.map(([, v]) => String(v))])
+    // - 用 JSONB || 合并操作符，一次请求完成更新，省去 SELECT 往返 - \\
+    // - use JSONB || merge operator: single round trip instead of SELECT + UPDATE - \\
+    const merge_query  = `UPDATE generic_data SET data = data || $1::jsonb WHERE collection = $2 ${filter_conditions ? "AND " + filter_conditions : ""}`
+    const merge_result = await get_pool().query(merge_query, [JSON.stringify(update), coll, ...filter_entries.map(([, v]) => String(v))])
 
-    if (existing_result.rows.length > 0) {
-      const merged_data = { ...existing_result.rows[0].data, ...update }
-      const update_query = `UPDATE generic_data SET data = $1 WHERE id = $2`
-      await get_pool().query(update_query, [JSON.stringify(merged_data), existing_result.rows[0].id])
-      return true
-    } else if (upsert) {
+    if ((merge_result.rowCount ?? 0) > 0) return true
+
+    if (upsert) {
       const new_doc = { ...filter, ...update }
       await insert_one(coll, new_doc)
       return true
     }
+
     return false
   }
 
   const { clause: where_clause, values: where_values } = build_where_clause(filter)
 
-  const existing_query = `SELECT id FROM ${table} ${where_clause} LIMIT 1`
-  const existing_result = await get_pool().query(existing_query, where_values)
+  const update_keys   = Object.keys(update)
+  const update_values = update_keys.map(key => {
+    const value = (update as any)[key]
+    if (table === "guild_settings" && key === "settings" && typeof value === "object" && !Array.isArray(value)) {
+      return JSON.stringify(value)
+    }
+    if (Array.isArray(value)) return value
+    return value
+  })
+  const set_clause     = update_keys.map((key, index) => `${key} = $${index + 1}`).join(", ")
+  const adjusted_where = where_clause.replace(/\$(\d+)/g, (_, num) => `$${parseInt(num) + update_keys.length}`)
 
-  if (existing_result.rows.length > 0) {
-    const update_keys = Object.keys(update)
-    const update_values = Object.keys(update).map(key => {
-      const value = (update as any)[key]
-      if (table === "guild_settings" && key === "settings" && typeof value === "object" && !Array.isArray(value)) {
-        return JSON.stringify(value)
-      }
-      if (Array.isArray(value)) {
-        return value
-      }
-      return value
-    })
-    const set_clause = update_keys.map((key, index) => `${key} = $${index + 1}`).join(", ")
+  // - 直接 UPDATE，不用先 SELECT 探行，省去一次数据库往返 - \\
+  // - direct UPDATE without a probe SELECT, saves one full DB round trip per call - \\
+  const update_query  = `UPDATE ${table} SET ${set_clause} ${adjusted_where}`
+  const update_result = await get_pool().query(update_query, [...update_values, ...where_values])
 
-    const adjusted_where = where_clause.replace(/\$(\d+)/g, (_, num) => `$${parseInt(num) + update_keys.length}`)
-    const update_query = `UPDATE ${table} SET ${set_clause} ${adjusted_where}`
-    await get_pool().query(update_query, [...update_values, ...where_values])
-    return true
-  } else if (upsert) {
+  if ((update_result.rowCount ?? 0) > 0) return true
+
+  if (upsert) {
     const new_doc = { ...filter, ...update }
     await insert_one(coll, new_doc as T)
     return true
