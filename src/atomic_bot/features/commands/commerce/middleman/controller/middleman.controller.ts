@@ -275,7 +275,7 @@ export async function open_middleman_ticket(options: OpenMiddlemanTicketOptions)
 // - 中间人维护模式配置类型 - \\
 // - middleman maintenance config type from remote JSON - \\
 interface MiddlemanConfig {
-  maintenance: boolean
+  __maintenance: boolean
 }
 
 // - 带 TTL 的维护模式缓存，30 秒过期 - \\
@@ -300,7 +300,7 @@ export async function fetch_maintenance_mode(): Promise<boolean> {
   try {
     const res    = await fetch(__maintenance_config_url, { signal: AbortSignal.timeout(5000) })
     const json   = await res.json() as MiddlemanConfig
-    const value  = json.maintenance === true
+    const value  = json.__maintenance === true
 
     __maintenance_cache = { value, expires_at: now + __maintenance_cache_ttl }
     return value
