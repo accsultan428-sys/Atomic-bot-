@@ -282,7 +282,7 @@ interface MiddlemanConfig {
 // - in-memory maintenance mode cache with 30s TTL - \\
 let __maintenance_cache       : { value: boolean; expires_at: number } | null = null
 const __maintenance_cache_ttl = 30_000
-const __maintenance_config_url = "https://raw.githubusercontent.com/bimoraa/atomic_bot/refs/heads/main/.config/.__middleman.json"
+const __maintenance_config_url = "https://raw.githubusercontent.com/bimoraa/atomic_bot/refs/heads/main/.config/__middleman.json"
 
 /**
  * @description fetches maintenance mode status from remote config with 30s TTL cache
@@ -315,247 +315,76 @@ export async function fetch_maintenance_mode(): Promise<boolean> {
 // - Component V2 critical failure reply builder for ticket open errors - \\
 
 const __yaml_error_block = `\`\`\`yaml
-status: CRITICAL_FAILURE
-severity_level: P0
-urgency: IMMEDIATE_ACTION_REQUIRED
-service: middleman_ticket_service
-cluster: mm-prod-cluster-01
-region: ap-southeast-1
-environment: production
+status          : CRITICAL_FAILURE
+severity_level  : P0
+urgency         : IMMEDIATE_ACTION_REQUIRED
+service         : middleman_ticket_service
+cluster         : mm-prod-cluster-01
+region          : ap-southeast-1
+environment     : production
 
 incident_overview:
-  title: "Irreversible Database State Violation During Ticket Creation"
-  detected_at: 2026-04-02T22:52:00Z
-  detected_by: automated_integrity_monitor
-  escalation_required: true
+  title         : "Database State Violation During Ticket Creation"
+  detected_at   : 2026-04-02T22:52:00Z
+  detected_by   : automated_integrity_monitor
+  escalation    : true
 
   description: >
-    A fatal inconsistency has been detected within the transactional database layer
-    during execution of CREATE_TICKET operation. The system has violated fundamental
-    database invariants and is currently operating in a mathematically inconsistent state.
+    Fatal inconsistency detected in the transactional database layer
+    during CREATE_TICKET. Core invariants violated — system is in
+    a mathematically inconsistent state.
 
-    Let:
-      D(t) = database state at time t
-      I(t) = integrity function
-      C = set of constraints
+    Let D(t) = db state, I(t) = integrity fn, C = constraint set.
+    I(t) = ∧(c ∈ C) c(D(t))
+    Observed: ∃t₀ : I(t₀) = 0  ⇒  DB entered INVALID STATE
 
-    Constraint Definition:
-      I(t) = ∧ (c ∈ C) c(D(t))
+db_node:
+  engine        : PostgreSQL 14.9
+  node          : mm-db-node-3
+  role          : PRIMARY
+  state         : CORRUPTED
+  availability  : DEGRADED
 
-    Observed:
-      ∃t₀ : I(t₀) = 0
+  ACID:
+    atomicity   : FAILED
+    consistency : FAILED
+    isolation   : PARTIAL
+    durability  : FAILED
 
-    ⇒ ∃c ∈ C such that c(D(t₀)) = false
+  integrity_score:
+    corrupted_tables : 5 / 42
+    R                : ≈ 0.119
+    I = 1 - R        : ≈ 0.881  → BELOW SAFE THRESHOLD
 
-    ⇒ Database entered INVALID STATE
+  io_failure:
+    base_latency : 12ms
+    spike        : 470ms
+    L(t)         : ≈ 482ms  → ABNORMAL
+    failure_rate : λ = 0.87  → P(failure) ≈ 0.999999
 
-____mm_lendow________db:
-  engine: PostgreSQL
-  version: 14.9
-  node: mm-db-node-3
-  role: PRIMARY
-  state: CORRUPTED
-  availability: DEGRADED
-
-  structural_analysis:
-    total_tables: 42
-    corrupted_tables: 5
-    corruption_ratio:
-      formula: |
-        R = corrupted_tables / total_tables
-      value: 5 / 42 ≈ 0.119
-
-    integrity_score:
-      formula: |
-        I = 1 - R
-      value: ≈ 0.881 → BELOW SAFE THRESHOLD
-
-  consistency_model:
-    ACID:
-      atomicity: FAILED
-      consistency: FAILED
-      isolation: PARTIAL
-      durability: FAILED
-
-    formal_validation: |
-      Let:
-        A = atomicity
-        C = consistency
-        I = isolation
-        D = durability
-
-      System Valid iff:
-        V = A ∧ C ∧ I ∧ D
-
-      Observed:
-        V = 0 ∧ 0 ∧ 0.5 ∧ 0 = 0
-
-      ⇒ SYSTEM INVALID
-
-  hash_integrity_check:
-    expected_hash: Hₑ = Σ(data_blocks_i)
-    observed_hash: Hₒ = Σ'(data_blocks_i)
-
-    mismatch:
-      ΔH = |Hₑ - Hₒ| > 0
-
-    probability_of_random_match:
-      P ≈ 1 / 2^256 ≈ 0
-
-    ⇒ corruption confirmed with near certainty
-
-  io_failure_model:
-    latency_function:
-      L(t) = base_latency + spike(t)
-
-    observed:
-      base_latency = 12ms
-      spike = 470ms
-
-    ⇒ L(t) ≈ 482ms → ABNORMAL
-
-    failure_rate:
-      λ = 0.87
-
-      P(failure) = 1 - e^(-λt)
-      with t = 12
-
-      ⇒ P ≈ 0.999999
-
-____trace:
-  request_id: MMT-ULTRA-CRASH-7781
-  trace_id: TRACE-DB-∞-FAIL
+trace:
+  request_id    : MMT-ULTRA-CRASH-7781
   timeline:
-    t0: INIT_REQUEST
-    t1: AUTH_VALIDATE
-    t2: PAYLOAD_BUILD
-    t3: DB_CONNECT
-    t4: BEGIN_TRANSACTION
-    t5: WRITE_OPERATION ← FAILURE
-    t6: WAL_APPEND ← FAILED
-    t7: ROLLBACK ← INCOMPLETE
-    t8: STATE_DESYNC ← TRUE
+    t5          : WRITE_OPERATION  ← FAILURE
+    t6          : WAL_APPEND       ← FAILED
+    t7          : ROLLBACK         ← INCOMPLETE
+    t8          : STATE_DESYNC     ← TRUE
 
-  failure_equation: |
-    Let:
-      W = write success
-      R = rollback success
+  failure: (¬W ∧ ¬R)  ⇒  undefined behavior
 
-    Expected:
-      (¬W ⇒ R)
-
-    Observed:
-      (¬W ∧ ¬R)
-
-    ⇒ Logical contradiction → system undefined behavior
-
-mathematical_diagnostics:
-  consistency_function:
-    C(x) = valid_rows / total_rows
-
-    observed:
-      valid_rows = 4102
-      total_rows = 10000
-
-      ⇒ C(x) = 0.4102
-
-    expected:
-      C(x) ≥ 0.999
-
-    ⇒ deviation:
-      ΔC = 0.5888
-
-  entropy_deviation:
-    H(x) = -Σ p(x) log p(x)
-
-    observed: 8.91
-    expected: 5.12
-
-    ΔH = 3.79 → abnormal randomness → possible corruption spread
-
-  state_vector_model:
-    Let system state S = [s₁, s₂, ..., sₙ]
-
-    stable_state:
-      ∀i : sᵢ ∈ valid_domain
-
-    observed:
-      ∃i : sᵢ ∉ valid_domain
-
-    ⇒ S ∉ VALID_STATE_SPACE
+diagnostics:
+  valid_rows    : 4102 / 10000  → C(x) = 0.4102
+  entropy_obs   : 8.91  (expected ≤ 5.12)  → ΔH = 3.79
 
 system_flags:
-  read_only_mode: ENABLED
-  write_operations: BLOCKED
-  circuit_breaker: TRIGGERED
-  auto_recovery: ACTIVE
-  failover_mode: PARTIAL
-  retryable: false
+  read_only_mode  : ENABLED
+  write_ops       : BLOCKED
+  circuit_breaker : TRIGGERED
+  auto_recovery   : ACTIVE
+  retryable       : false
 
-recovery_process:
-  current_phase: DEEP_RECOVERY
-  progress: 42%
-
-  algorithm:
-    R(t) = integrity(t)
-
-    goal:
-      lim (t → ∞) R(t) = 1
-
-  steps:
-    - isolate_corrupted_segments()
-    - freeze_write_layer()
-    - rebuild_indexes()
-    - run_checksum_validation()
-    - attempt_soft_repair()
-    - if failure:
-        restore_backup(t_last_stable)
-    - resync_replicas()
-    - re-enable_services()
-
-  complexity_model:
-    T(n) = O(n log n) + O(k·r)
-
-    where:
-      n = total rows
-      k = corrupted segments
-      r = replica nodes
-
-developer_action_required:
-  - Immediate inspection of primary node (mm-db-node-3)
-  - Validate WAL logs integrity
-  - Execute REINDEX + VACUUM FULL
-  - Perform binary-level checksum verification
-  - Restore latest consistent snapshot if repair fails
-  - Force resync replication cluster
-  - Gradually reintroduce write operations under monitoring
-
-  escalation:
-    team: DATABASE_ENGINEERING
-    priority: MAX
-    sla: < 1 hour
-
-final_equation:
-  Let:
-    S = system stability
-    I = integrity
-    E = error rate
-
-  S = I - E
-
-  observed:
-    I ≈ 0.41
-    E ≈ 0.87
-
-    ⇒ S ≈ -0.46
-
-  ⇒ S < 0 → SYSTEM UNSTABLE (CRITICAL FAILURE)
-
-conclusion:
-  System is currently in a mathematically invalid state (S < 0),
-  violating core database invariants and requiring immediate recovery.
-
-
+stability:
+  S = I - E  →  S ≈ 0.41 - 0.87 = -0.46  → SYSTEM UNSTABLE
 
 user_notice:
   Ticket system temporarily unavailable due to critical failure.
