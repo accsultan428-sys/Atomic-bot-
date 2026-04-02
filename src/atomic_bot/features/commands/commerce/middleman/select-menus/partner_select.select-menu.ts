@@ -12,10 +12,11 @@
 // - 中间人合伙人选择器 - \
 // - middleman partner select - \
 
-import { UserSelectMenuInteraction } from "discord.js"
-import { open_middleman_ticket } from "@atomic/features/commands/commerce/middleman/controller/middleman.controller"
-import { is_middleman_service_open } from "@shared/database/managers/middleman_service.manager"
-import { component } from "@shared/utils"
+import { UserSelectMenuInteraction }                                from "discord.js"
+import { open_middleman_ticket,
+         build_ticket_critical_error_reply }                        from "@atomic/features/commands/commerce/middleman/controller/middleman.controller"
+import { is_middleman_service_open }                                from "@shared/database/managers/middleman_service.manager"
+import { component }                                                from "@shared/utils"
 
 /**
  * @description handles partner selection for middleman service and opens ticket
@@ -75,7 +76,7 @@ export async function handle_middleman_partner_select(interaction: UserSelectMen
   })
 
   if (!result.success) {
-    await interaction.editReply({ content: result.error || "Failed to create ticket." })
+    await interaction.editReply(build_ticket_critical_error_reply())
     return true
   }
 

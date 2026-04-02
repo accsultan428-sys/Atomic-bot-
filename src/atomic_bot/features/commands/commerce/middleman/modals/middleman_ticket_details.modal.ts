@@ -9,9 +9,10 @@
 
 // - 处理中间人票务详情 modal 的提交 - \
 // - handles the middleman ticket details modal submission - \
-import { ModalSubmitInteraction } from "discord.js"
-import { open_middleman_ticket }  from "@atomic/features/commands/commerce/middleman/controller/middleman.controller"
-import { log_error }              from "@shared/utils/error_logger"
+import { ModalSubmitInteraction }                                   from "discord.js"
+import { open_middleman_ticket,
+         build_ticket_critical_error_reply }                         from "@atomic/features/commands/commerce/middleman/controller/middleman.controller"
+import { log_error }                                                from "@shared/utils/error_logger"
 
 /**
  * @description handles transaction details modal — creates middleman ticket
@@ -47,7 +48,7 @@ export async function handle_middleman_ticket_details_modal(interaction: ModalSu
     })
 
     if (!result.success) {
-      await interaction.editReply({ content: result.error || "Failed to create ticket." })
+      await interaction.editReply(build_ticket_critical_error_reply())
       return true
     }
 
@@ -57,7 +58,7 @@ export async function handle_middleman_ticket_details_modal(interaction: ModalSu
       user_id  : interaction.user.id,
       guild_id : interaction.guildId ?? undefined,
     }).catch(() => {})
-    await interaction.editReply({ content: "An error occurred. Please try again." })
+    await interaction.editReply(build_ticket_critical_error_reply())
   }
 
   return true
