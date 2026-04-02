@@ -3,7 +3,7 @@ import { pool } from '@/lib/db'
 // - bot Express 服务器 URL - \\
 // - bot Express server URL - \\
 const __bot_url      = process.env.NEXT_PUBLIC_BOT_URL || 'https://atomicbot-production.up.railway.app'
-const __interval_ms  = 3000
+const __interval_ms  = 1000
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

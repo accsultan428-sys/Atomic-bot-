@@ -7,25 +7,34 @@ const __bot_url = process.env.NEXT_PUBLIC_BOT_URL || 'https://atomicbot-producti
 
 export interface bot_stats_payload {
   // - bot status - \\
-  status      : 'alive' | 'starting' | 'offline'
-  bot_ready   : boolean
+  status          : 'alive' | 'starting' | 'offline'
+  bot_ready       : boolean
   // - latency - \\
-  ws_ping     : number
-  api_latency : number
-  db_latency  : number
+  ws_ping         : number
+  api_latency     : number
+  db_latency      : number
+  // - shards / commands - \\
+  shard_count     : number
+  shard_pings     : number[]
+  command_count   : number
+  // - runtime info - \\
+  node_version    : string
+  platform        : string
+  cpu_pct         : number
   // - memory - \\
-  memory      : {
-    rss_mb        : number
-    heap_used_mb  : number
-    heap_total_mb : number
-    external_mb   : number
+  memory          : {
+    rss_mb          : number
+    heap_used_mb    : number
+    heap_total_mb   : number
+    external_mb     : number
+    array_buffers_mb: number
   }
   // - uptime - \\
-  uptime         : number
+  uptime          : number
   uptime_formatted: string
   // - timestamps - \\
-  timestamp      : number
-  sampled_at     : number
+  timestamp       : number
+  sampled_at      : number
 }
 
 /**
@@ -90,7 +99,13 @@ export async function GET() {
       ws_ping         : -1,
       api_latency,
       db_latency,
-      memory          : { rss_mb: 0, heap_used_mb: 0, heap_total_mb: 0, external_mb: 0 },
+      shard_count     : 0,
+      shard_pings     : [],
+      command_count   : 0,
+      node_version    : '—',
+      platform        : '—',
+      cpu_pct         : 0,
+      memory          : { rss_mb: 0, heap_used_mb: 0, heap_total_mb: 0, external_mb: 0, array_buffers_mb: 0 },
       uptime          : 0,
       uptime_formatted: '—',
       timestamp       : Date.now(),
@@ -102,15 +117,21 @@ export async function GET() {
   const raw = await bot_response.value.json()
 
   const payload: bot_stats_payload = {
-    status          : raw.status ?? 'offline',
-    bot_ready       : raw.bot_ready ?? false,
-    ws_ping         : raw.ws_ping ?? -1,
+    status          : raw.status          ?? 'offline',
+    bot_ready       : raw.bot_ready       ?? false,
+    ws_ping         : raw.ws_ping         ?? -1,
     api_latency,
     db_latency,
-    memory          : raw.memory ?? { rss_mb: 0, heap_used_mb: 0, heap_total_mb: 0, external_mb: 0 },
-    uptime          : raw.uptime ?? 0,
+    shard_count     : raw.shard_count     ?? 0,
+    shard_pings     : raw.shard_pings     ?? [],
+    command_count   : raw.command_count   ?? 0,
+    node_version    : raw.node_version    ?? '—',
+    platform        : raw.platform        ?? '—',
+    cpu_pct         : raw.cpu_pct         ?? 0,
+    memory          : raw.memory ?? { rss_mb: 0, heap_used_mb: 0, heap_total_mb: 0, external_mb: 0, array_buffers_mb: 0 },
+    uptime          : raw.uptime          ?? 0,
     uptime_formatted: format_uptime(raw.uptime ?? 0),
-    timestamp       : raw.timestamp ?? Date.now(),
+    timestamp       : raw.timestamp       ?? Date.now(),
     sampled_at      : Date.now(),
   }
 
