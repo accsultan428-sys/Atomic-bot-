@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 
+// - pre-render at build time, served as static file — zero compute on every request - \\
+export const dynamic = "force-static"
+
 const experienceData = [
     {
         icon: "/images/icon/tailwind-icon.svg",
@@ -60,9 +63,8 @@ const projectOverview = {
 };
 
 export const GET = async () => {
-    return NextResponse.json({
-        experienceData,
-        educationData,
-        projectOverview
-    });
+    return NextResponse.json(
+        { experienceData, educationData, projectOverview },
+        { headers: { "Cache-Control": "public, max-age=31536000, immutable" } },
+    )
 };

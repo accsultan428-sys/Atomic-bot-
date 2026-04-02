@@ -76,7 +76,7 @@ export const TextShimmerWave = ({
 
   return (
     <MotionComponent
-      className={cn("relative inline-block [perspective:500px]", className)}
+      className={cn("relative inline-block perspective-normal", className)}
       style={{ color: baseColor }}
     >
       {children.split("").map((char, i) => {
@@ -85,7 +85,7 @@ export const TextShimmerWave = ({
         return (
           <motion.span
             key={`${char}-${i}-${isDark}`}
-            className="inline-block whitespace-pre [transform-style:preserve-3d]"
+            className="inline-block whitespace-pre transform-3d"
             initial={{
               translateZ: 0,
               scale      : 1,

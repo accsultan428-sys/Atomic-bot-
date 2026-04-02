@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 
+// - pre-render at build time, served as static file — zero compute on every request - \\
+export const dynamic = "force-static"
+
 const featureWork = [
     {
         title: "atomic_bot — Discord Bot Platform",
@@ -16,7 +19,8 @@ const featureWork = [
 ]
 
 export const GET = async () => {
-    return NextResponse.json({
-        featureWork
-    });
+    return NextResponse.json(
+        { featureWork },
+        { headers: { "Cache-Control": "public, max-age=31536000, immutable" } },
+    )
 };

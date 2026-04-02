@@ -38,7 +38,7 @@ export const TextShimmer = ({
         } as CSSProperties
       }
       className={cn(
-        "relative inline-block bg-[length:250%_100%,auto] bg-clip-text",
+        "relative inline-block bg-size-[250%_100%,auto] bg-clip-text",
         "text-transparent [--base-color:#a1a1aa] [--base-gradient-color:#000]",
         "dark:[--base-color:#71717a] dark:[--base-gradient-color:#ffffff]",
         "bg-[linear-gradient(110deg,var(--base-color)_25%,var(--base-gradient-color)_50%,var(--base-color)_75%)] ",
