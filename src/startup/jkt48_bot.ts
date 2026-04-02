@@ -52,46 +52,6 @@ const client = new Client({
 
 client.commands = new Collection()
 
-let typing_interval: NodeJS.Timeout | null = null
-
-const __persistent_typing_channel_id = "1257034070035267636"
-const __persistent_typing_interval_ms = 8000
-
-/**
- * - 启动持续输入状态 - \\
- * - start persistent typing - \\
- * @returns {Promise<void>}
- */
-async function start_persistent_typing(): Promise<void> {
-  if (typing_interval) {
-    clearInterval(typing_interval)
-    typing_interval = null
-  }
-
-  const send_typing = async (): Promise<void> => {
-    try {
-      const channel = client.channels.cache.get(__persistent_typing_channel_id)
-        || await client.channels.fetch(__persistent_typing_channel_id).catch(() => null)
-
-      if (!channel || !("sendTyping" in channel)) {
-        return
-      }
-
-      await (channel as any).sendTyping()
-    } catch (error) {
-      console.error("[ - JKT48 - ] Failed to send typing:", error)
-      await log_error(client, error as Error, "persistent_typing_loop_jkt48", {
-        channel_id: __persistent_typing_channel_id,
-      })
-    }
-  }
-
-  await send_typing()
-  typing_interval = setInterval(() => {
-    void send_typing()
-  }, __persistent_typing_interval_ms)
-}
-
 /**
  * - 加载 JKT48 命令 - \\
  * - load jkt48 commands - \\
@@ -161,8 +121,6 @@ async function register_jkt48_commands(commands_data: object[]) {
 client.once("ready", async () => {
   console.log(`[ - JKT48 - ] Bot logged in as ${client.user?.tag}`)
   console.log(`[ - JKT48 - ] Serving ${client.guilds.cache.size} guilds`)
-
-  await start_persistent_typing()
 
   // - 连上数据库，不然监控没法跑 - \\
   // - connect to database, essential for live monitoring - \\

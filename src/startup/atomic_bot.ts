@@ -25,7 +25,7 @@ import { load_afk_from_db, load_afk_ignored_channels_from_db }           from "@
 import { check_server_tag_change, scan_banned_tags_on_startup }           from "@shared/database/settings/server_tag"
 import { start_free_script_checker }                                     from "@shared/database/managers/free_script.manager"
 import { start_service_provider_cache, stop_service_provider_cache }     from "@atomic/integrations/api/service_provider_cache"
-import { db, component }                                                 from "@shared/utils"
+import { db, component, api }                                            from "@shared/utils"
 import { log_error }                                                     from "@shared/utils/error_logger"
 import { check_spam }                                                    from "@atomic/integrations/cache/anti_spam"
 import { load_reminders_from_db }                                        from "@atomic/features/commands/server-util/reminder/reminder.commands"
@@ -295,15 +295,10 @@ client.once("ready", async () => {
 
             // - 成员已有隔离角色，无需处理 - \\
             // - member already has quarantine role, skip - \\
-            const has_quarantine = member.roles.cache.has(__startup_quarantine_role)
-            if (has_quarantine) continue
-
-            const managed_roles = member.roles.cache
-              .filter(r => r.managed || r.id === guild.id)
-              .map(r => r.id)
+            if (api.member_has_role(member, __startup_quarantine_role)) continue
 
             await member.roles.set(
-              [...managed_roles, __startup_quarantine_role],
+              [__startup_quarantine_role],
               "Startup quarantine rescan: quarantine role was missing"
             ).catch(() => {})
 
@@ -344,12 +339,14 @@ client.once("ready", async () => {
     start_roblox_update_checker(client)
     const all_guilds = await client.guilds.fetch().catch(() => null)
     if (all_guilds) {
-      for (const [guild_id] of all_guilds) {
-        const guild = await client.guilds.fetch(guild_id).catch(() => null)
-        if (!guild) continue
-        await tempvoice.reconcile_tempvoice_guild(guild)
-        await tempvoice.load_saved_settings_from_db(guild.id)
-      }
+      await Promise.all(
+        [...all_guilds.keys()].map(async (guild_id) => {
+          const guild = await client.guilds.fetch(guild_id).catch(() => null)
+          if (!guild) return
+          await tempvoice.reconcile_tempvoice_guild(guild)
+          await tempvoice.load_saved_settings_from_db(guild.id)
+        })
+      )
     }
     register_audit_logs(client)
     await start_invite_logger(client)
@@ -377,7 +374,9 @@ client.on("guildMemberUpdate", async (old_member, new_member) => {
   try {
     // - 只处理角色增加的情况 - \\
     // - only process when roles were added - \\
-    if (new_member.roles.cache.size <= old_member.roles.cache.size) return
+    const old_raw = (old_member.roles as any)?._roles as string[] ?? []
+    const new_raw = (new_member.roles as any)?._roles as string[] ?? []
+    if (new_raw.length <= old_raw.length) return
 
     const lock_key = `${new_member.guild.id}:${new_member.id}`
     if (__quarantine_guard_lock.has(lock_key)) return
@@ -394,14 +393,10 @@ client.on("guildMemberUpdate", async (old_member, new_member) => {
 
       const __quarantine_role = process.env.QUARANTINE_ROLE_ID ?? "1265318689130024992"
 
-      const managed_roles = fresh.roles.cache
-        .filter(r => r.managed || r.id === fresh.guild.id)
-        .map(r => r.id)
-
       // - 移除所有非 managed 角色，只保留隔离角色 - \\
       // - strip all non-managed roles, keep only quarantine role - \\
       await fresh.roles.set(
-        [...managed_roles, __quarantine_role],
+        [__quarantine_role],
         "Quarantine guard: role added while member was quarantined"
       ).catch(() => {})
 
@@ -426,12 +421,8 @@ client.on("guildMemberAdd", async (member) => {
 
     const __quarantine_role = process.env.QUARANTINE_ROLE_ID ?? "1265318689130024992"
 
-    const managed_roles = member.roles.cache
-      .filter(r => r.managed || r.id === member.guild.id)
-      .map(r => r.id)
-
     await member.roles.set(
-      [...managed_roles, __quarantine_role],
+      [__quarantine_role],
       "Quarantine guard: member rejoined while still quarantined"
     ).catch(() => {})
 

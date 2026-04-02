@@ -32,12 +32,12 @@ function is_boost_system_message(message: Message): boolean {
   return boost_message_types.has(Number(message.type))
 }
 
+const config = load_config<booster_config>("booster")
+
 client.on(Events.MessageCreate, async (message: Message) => {
   try {
     if (!message.inGuild()) return
     if (!is_boost_system_message(message)) return
-
-    const config = load_config<booster_config>("booster")
 
     if (!config.booster_log_channel_id) {
       console.error("[ - BOOSTER LOG - ] Booster log channel id is missing")

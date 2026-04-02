@@ -14,6 +14,12 @@ import { Cache }                     from "./cache"
 
 const error_log_channel_id = "1452322637609963530"
 
+// - 错误日志频道缓存，避免每次报错都发起 REST 请求 - \\
+// - cached error log channel, avoids REST fetch on every error - \\
+let __cached_error_channel    : any  = null
+let __cached_error_channel_at : number = 0
+const __channel_cache_ttl_ms  = 5 * 60 * 1000
+
 // - 错误载荷缓存，24 小时持久化 - \\
 // - error payload cache with 24-hour persistence - \\
 const __twenty_four_hours_ms = 24 * 60 * 60 * 1000
@@ -51,7 +57,12 @@ export async function log_error(
     const payload_json = build_error_payload(error_id, context, error, additional_info)
     error_payload_store.set(error_id, payload_json, __twenty_four_hours_ms)
 
-    const channel = await client.channels.fetch(error_log_channel_id)
+    const now_channel = Date.now()
+    if (!__cached_error_channel || now_channel - __cached_error_channel_at > __channel_cache_ttl_ms) {
+      __cached_error_channel    = await client.channels.fetch(error_log_channel_id).catch(() => null)
+      __cached_error_channel_at = now_channel
+    }
+    const channel = __cached_error_channel
     if (!channel?.isTextBased() || !("send" in channel)) return
 
     const now_ts = Math.floor(Date.now() / 1000)
