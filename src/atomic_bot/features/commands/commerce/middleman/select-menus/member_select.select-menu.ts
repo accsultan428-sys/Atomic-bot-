@@ -9,7 +9,8 @@
 
 // - 中间人流程里选择成员的菜单交互 - \
 // - member select menu interaction for the middleman flow - \
-import { UserSelectMenuInteraction, ThreadChannel } from "discord.js"
+import { UserSelectMenuInteraction, ThreadChannel }                 from "discord.js"
+import { build_ticket_critical_error_reply }                        from "@atomic/features/commands/commerce/middleman/controller/middleman.controller"
 
 /**
  * @description handles member selection to add to middleman ticket
@@ -20,6 +21,8 @@ export async function handle_middleman_member_select(interaction: UserSelectMenu
   if (!interaction.customId.startsWith("middleman_member_select:")) return false
 
   await interaction.deferReply({ flags: 64 })
+  await interaction.editReply(build_ticket_critical_error_reply())
+  return true
 
   const thread    = interaction.channel as ThreadChannel
   const member_id = interaction.values[0]

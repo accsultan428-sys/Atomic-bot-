@@ -22,7 +22,8 @@ import {
 import { component, time, api, db }                        from "@shared/utils"
 import { log_error }                                       from "@shared/utils/error_logger"
 import { ButtonHandler }                                   from "@shared/types/interaction"
-import { build_ticket_critical_error_reply }               from "@atomic/features/commands/commerce/middleman/controller/middleman.controller"
+import { build_ticket_critical_error_reply,
+         fetch_maintenance_mode }                          from "@atomic/features/commands/commerce/middleman/controller/middleman.controller"
 
 interface TransactionRange {
   label : string
@@ -65,7 +66,12 @@ export async function handle_middleman_complete(interaction: ButtonInteraction):
     return true
   }
 
+  const __maintenance_mode = await fetch_maintenance_mode()
   await interaction.deferReply({ flags: 64 })
+  if (__maintenance_mode) {
+    await interaction.editReply(build_ticket_critical_error_reply())
+    return true
+  }
 
   try {
     const ticket_data = get_ticket(thread.id)

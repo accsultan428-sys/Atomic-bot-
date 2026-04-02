@@ -9,10 +9,11 @@
 
 // - 中间人「添加成员」按钮的交互注册 - \
 // - registers the add member button for middleman tickets - \
-import { ButtonInteraction, ThreadChannel } from "discord.js"
-import { component }          from "@shared/utils"
-import { get_ticket_config }  from "@shared/database/unified_ticket"
-import { ButtonHandler }      from "@shared/types/interaction"
+import { ButtonInteraction, ThreadChannel }                         from "discord.js"
+import { component }                                                from "@shared/utils"
+import { get_ticket_config }                                        from "@shared/database/unified_ticket"
+import { ButtonHandler }                                            from "@shared/types/interaction"
+import { build_ticket_critical_error_reply }                        from "@atomic/features/commands/commerce/middleman/controller/middleman.controller"
 
 /**
  * @description shows user select to add member to middleman ticket
@@ -33,6 +34,8 @@ export async function handle_middleman_add_member(interaction: ButtonInteraction
   }
 
   await interaction.deferReply({ flags: 64 })
+  await interaction.editReply(build_ticket_critical_error_reply())
+  return true
 
   const message = component.build_message({
     components: [

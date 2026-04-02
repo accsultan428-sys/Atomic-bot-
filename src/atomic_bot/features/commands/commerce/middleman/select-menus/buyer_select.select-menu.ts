@@ -9,8 +9,9 @@
 
 // - 中间人流程里选择买家的菜单交互 - \
 // - buyer select menu interaction for the middleman flow - \
-import { UserSelectMenuInteraction } from "discord.js"
-import { component }                  from "@shared/utils"
+import { UserSelectMenuInteraction }                                from "discord.js"
+import { component }                                                from "@shared/utils"
+import { build_ticket_critical_error_reply }                        from "@atomic/features/commands/commerce/middleman/controller/middleman.controller"
 
 /**
  * @description handles buyer selection — shows fee payer string-select next
@@ -19,6 +20,10 @@ import { component }                  from "@shared/utils"
  */
 export async function handle_middleman_buyer_select(interaction: UserSelectMenuInteraction): Promise<boolean> {
   if (!interaction.customId.startsWith("middleman_pembeli_select:")) return false
+
+  await interaction.deferReply({ flags: 64 })
+  await interaction.editReply(build_ticket_critical_error_reply())
+  return true
 
   const parts     = interaction.customId.split(":")
   const range_id  = parts[1]

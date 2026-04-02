@@ -9,9 +9,10 @@
 
 // - 中间人流程里选择卖家的菜单交互 - \
 // - seller select menu interaction for the middleman flow - \
-import { UserSelectMenuInteraction } from "discord.js"
-import { is_middleman_service_open }  from "@shared/database/managers/middleman_service.manager"
-import { component }                  from "@shared/utils"
+import { UserSelectMenuInteraction }                                from "discord.js"
+import { is_middleman_service_open }                                from "@shared/database/managers/middleman_service.manager"
+import { component }                                                from "@shared/utils"
+import { build_ticket_critical_error_reply }                        from "@atomic/features/commands/commerce/middleman/controller/middleman.controller"
 
 /**
  * @description handles seller selection — shows buyer user-select next
@@ -20,6 +21,10 @@ import { component }                  from "@shared/utils"
  */
 export async function handle_middleman_seller_select(interaction: UserSelectMenuInteraction): Promise<boolean> {
   if (!interaction.customId.startsWith("middleman_penjual_select:")) return false
+
+  await interaction.deferReply({ flags: 64 })
+  await interaction.editReply(build_ticket_critical_error_reply())
+  return true
 
   const is_open = await is_middleman_service_open(interaction.guildId || "")
   if (!is_open) {

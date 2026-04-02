@@ -14,7 +14,8 @@
 
 import { UserSelectMenuInteraction }                                from "discord.js"
 import { open_middleman_ticket,
-         build_ticket_critical_error_reply }                        from "@atomic/features/commands/commerce/middleman/controller/middleman.controller"
+         build_ticket_critical_error_reply,
+         fetch_maintenance_mode }                                   from "@atomic/features/commands/commerce/middleman/controller/middleman.controller"
 import { is_middleman_service_open }                                from "@shared/database/managers/middleman_service.manager"
 import { component }                                                from "@shared/utils"
 
@@ -27,6 +28,10 @@ export async function handle_middleman_partner_select(interaction: UserSelectMen
   if (!interaction.customId.startsWith("middleman_partner_select:")) return false
 
   await interaction.deferReply({ flags: 64 })
+  if (await fetch_maintenance_mode()) {
+    await interaction.editReply(build_ticket_critical_error_reply())
+    return true
+  }
 
   // - 检查中间人服务是否开启 - \\
   // - check if middleman service is open - \\

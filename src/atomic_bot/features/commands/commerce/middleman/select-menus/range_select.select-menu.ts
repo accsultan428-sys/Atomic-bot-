@@ -12,7 +12,8 @@
 import { StringSelectMenuInteraction }                              from "discord.js"
 import { component }                                                from "@shared/utils"
 import { is_middleman_service_open }                                from "@shared/database/managers/middleman_service.manager"
-import { build_ticket_critical_error_reply }                        from "@atomic/features/commands/commerce/middleman/controller/middleman.controller"
+import { build_ticket_critical_error_reply,
+         fetch_maintenance_mode }                                   from "@atomic/features/commands/commerce/middleman/controller/middleman.controller"
 import { log_error }                                                from "@shared/utils/error_logger"
 
 interface TransactionRange {
@@ -37,6 +38,10 @@ const __transaction_ranges: Record<string, TransactionRange> = {
  */
 export async function handle_middleman_transaction_range_select(interaction: StringSelectMenuInteraction): Promise<void> {
   await interaction.deferReply({ flags: 64 })
+  if (await fetch_maintenance_mode()) {
+    await interaction.editReply(build_ticket_critical_error_reply())
+    return
+  }
 
   try {
     const is_open = await is_middleman_service_open(interaction.guildId || "")

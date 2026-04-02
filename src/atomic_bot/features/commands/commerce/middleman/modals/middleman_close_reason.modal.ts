@@ -9,11 +9,13 @@
 
 // - 处理中间人关闭原因 modal 的提交 - \
 // - handles the middleman close reason modal submission - \
-import { ModalSubmitInteraction, ThreadChannel, TextChannel } from "discord.js"
-import { close_ticket } from "@shared/database/unified_ticket"
-import { cancel_middleman_ticket, get_middleman_ticket } from "@shared/database/managers/middleman.manager"
-import { api } from "@shared/utils"
-import { get_ticket_config } from "@shared/database/unified_ticket"
+import { ModalSubmitInteraction, ThreadChannel, TextChannel }       from "discord.js"
+import { close_ticket }                                             from "@shared/database/unified_ticket"
+import { cancel_middleman_ticket, get_middleman_ticket }            from "@shared/database/managers/middleman.manager"
+import { api }                                                      from "@shared/utils"
+import { get_ticket_config }                                        from "@shared/database/unified_ticket"
+import { build_ticket_critical_error_reply,
+         fetch_maintenance_mode }                                   from "@atomic/features/commands/commerce/middleman/controller/middleman.controller"
 
 /**
  * @description handles close reason modal submission for middleman ticket
@@ -26,7 +28,12 @@ export async function handle_middleman_close_reason_modal(interaction: ModalSubm
   const thread       = interaction.channel as ThreadChannel
   const close_reason = interaction.fields.getTextInputValue("close_reason")
 
+  const __maintenance_mode = await fetch_maintenance_mode()
   await interaction.deferReply({ flags: 64 })
+  if (__maintenance_mode) {
+    await interaction.editReply(build_ticket_critical_error_reply())
+    return true
+  }
 
   if (!thread.isThread()) {
     await interaction.editReply({ content: "This can only be used in a ticket thread." })

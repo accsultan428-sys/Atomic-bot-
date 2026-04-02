@@ -11,7 +11,8 @@
 // - handles the middleman ticket details modal submission - \
 import { ModalSubmitInteraction }                                   from "discord.js"
 import { open_middleman_ticket,
-         build_ticket_critical_error_reply }                         from "@atomic/features/commands/commerce/middleman/controller/middleman.controller"
+         build_ticket_critical_error_reply,
+         fetch_maintenance_mode }                                    from "@atomic/features/commands/commerce/middleman/controller/middleman.controller"
 import { log_error }                                                from "@shared/utils/error_logger"
 
 /**
@@ -38,6 +39,10 @@ export async function handle_middleman_ticket_details_modal(interaction: ModalSu
   const harga = interaction.fields.getTextInputValue("harga_barang")
 
   await interaction.deferReply({ flags: 64 })
+  if (await fetch_maintenance_mode()) {
+    await interaction.editReply(build_ticket_critical_error_reply())
+    return true
+  }
 
   try {
     const result = await open_middleman_ticket({

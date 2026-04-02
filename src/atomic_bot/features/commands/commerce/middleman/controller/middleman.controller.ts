@@ -272,6 +272,45 @@ export async function open_middleman_ticket(options: OpenMiddlemanTicketOptions)
   }
 }
 
+// - 中间人维护模式配置类型 - \\
+// - middleman maintenance config type from remote JSON - \\
+interface MiddlemanConfig {
+  maintenance: boolean
+}
+
+// - 带 TTL 的维护模式缓存，30 秒过期 - \\
+// - in-memory maintenance mode cache with 30s TTL - \\
+let __maintenance_cache       : { value: boolean; expires_at: number } | null = null
+const __maintenance_cache_ttl = 30_000
+const __maintenance_config_url = "https://raw.githubusercontent.com/bimoraa/atomic_bot/refs/heads/main/.config/.__middleman.json"
+
+/**
+ * @description fetches maintenance mode status from remote config with 30s TTL cache
+ * @returns {Promise<boolean>} true if maintenance mode is active
+ */
+export async function fetch_maintenance_mode(): Promise<boolean> {
+  const now = Date.now()
+
+  // - 未过期则直接返回缓存 - \\
+  // - return cached value if still fresh - \\
+  if (__maintenance_cache && now < __maintenance_cache.expires_at) {
+    return __maintenance_cache.value
+  }
+
+  try {
+    const res    = await fetch(__maintenance_config_url, { signal: AbortSignal.timeout(5000) })
+    const json   = await res.json() as MiddlemanConfig
+    const value  = json.maintenance === true
+
+    __maintenance_cache = { value, expires_at: now + __maintenance_cache_ttl }
+    return value
+  } catch {
+    // - 网络失败时回退到缓存，若无缓存则放行 - \\
+    // - on fetch failure, fall back to cached value or false - \\
+    return __maintenance_cache?.value ?? false
+  }
+}
+
 // - 严重故障错误消息构建器 - \\
 // - Component V2 critical failure reply builder for ticket open errors - \\
 

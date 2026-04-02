@@ -9,11 +9,13 @@
 
 // - 中间人关闭按钮的交互注册 - \
 // - registers the close button for middleman tickets - \
-import { ButtonInteraction, ThreadChannel, TextChannel } from "discord.js"
-import { close_ticket, get_ticket_config } from "@shared/database/unified_ticket"
-import { cancel_middleman_ticket, get_middleman_ticket } from "@shared/database/managers/middleman.manager"
-import { api } from "@shared/utils"
-import { ButtonHandler } from "@shared/types/interaction"
+import { ButtonInteraction, ThreadChannel, TextChannel }            from "discord.js"
+import { close_ticket, get_ticket, get_ticket_config }              from "@shared/database/unified_ticket"
+import { cancel_middleman_ticket, get_middleman_ticket }            from "@shared/database/managers/middleman.manager"
+import { api }                                                      from "@shared/utils"
+import { ButtonHandler }                                            from "@shared/types/interaction"
+import { build_ticket_critical_error_reply,
+         fetch_maintenance_mode }                                   from "@atomic/features/commands/commerce/middleman/controller/middleman.controller"
 
 /**
  * @description handles direct close for middleman ticket
@@ -42,7 +44,12 @@ export async function handle_middleman_close(interaction: ButtonInteraction): Pr
     return true
   }
 
+  const __maintenance_mode = await fetch_maintenance_mode()
   await interaction.deferReply({ flags: 64 })
+  if (__maintenance_mode) {
+    await interaction.editReply(build_ticket_critical_error_reply())
+    return true
+  }
 
   // - 标记工单为已取消 - \\
   // - mark ticket as cancelled in database - \\
