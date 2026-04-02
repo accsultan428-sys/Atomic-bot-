@@ -31,7 +31,7 @@ export async function handle_middleman_seller_select(interaction: UserSelectMenu
 
   const is_open = await is_middleman_service_open(interaction.guildId || "")
   if (!is_open) {
-    await interaction.reply({
+    await interaction.editReply({
       ...component.build_message({
         components: [
           component.container({
@@ -48,7 +48,7 @@ export async function handle_middleman_seller_select(interaction: UserSelectMenu
             ],
           }),
         ],
-      }), ephemeral: true,
+      }),
     })
     return true
   }
@@ -57,11 +57,11 @@ export async function handle_middleman_seller_select(interaction: UserSelectMenu
   const seller_id  = interaction.values[0]
 
   if (!range_id || !seller_id) {
-    await interaction.reply({ content: "Invalid selection. Please try again.", ephemeral: true})
+    await interaction.editReply({ content: "Invalid selection. Please try again." })
     return true
   }
 
-  await interaction.reply({
+  await interaction.editReply({
     ...component.build_message({
       components: [
         component.container({
@@ -99,7 +99,7 @@ export async function handle_middleman_seller_select(interaction: UserSelectMenu
           ],
         }),
       ],
-    }), ephemeral: true,
+    }),
   })
   return true
 }

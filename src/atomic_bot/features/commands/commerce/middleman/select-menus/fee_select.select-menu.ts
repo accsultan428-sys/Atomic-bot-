@@ -22,9 +22,11 @@ import { build_ticket_critical_error_reply,
 export async function handle_middleman_fee_select(interaction: StringSelectMenuInteraction): Promise<boolean> {
   if (!interaction.customId.startsWith("middleman_fee_select:")) return false
 
-  await interaction.deferReply({ flags: 64 })
   if (await fetch_maintenance_mode()) {
-    await interaction.editReply(build_ticket_critical_error_reply())
+    await interaction.reply({
+      ...build_ticket_critical_error_reply(),
+      ephemeral: true,
+    })
     return true
   }
 
@@ -35,7 +37,7 @@ export async function handle_middleman_fee_select(interaction: StringSelectMenuI
   const fee_value = interaction.values[0]
 
   if (!range_id || !seller_id || !buyer_id || !fee_value) {
-    await interaction.reply({ content: "Invalid selection. Please try again.", ephemeral: true})
+    await interaction.reply({ content: "Invalid selection. Please try again.", ephemeral: true })
     return true
   }
 

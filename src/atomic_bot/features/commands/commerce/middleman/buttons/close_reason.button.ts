@@ -34,9 +34,11 @@ export async function handle_middleman_close_reason(interaction: ButtonInteracti
     return true
   }
 
-  await interaction.deferReply({ flags: 64 })
   if (await fetch_maintenance_mode()) {
-    await interaction.editReply(build_ticket_critical_error_reply())
+    await interaction.reply({
+      ...build_ticket_critical_error_reply(),
+      ephemeral: true,
+    })
     return true
   }
 

@@ -25,7 +25,7 @@ export async function handle_middleman_penjual_self(interaction: ButtonInteracti
   const range_id = parts[1]
   const seller_id = interaction.user.id
 
-  await interaction.reply({
+  await interaction.editReply({
     ...component.build_message({
       components: [
         component.container({
@@ -63,7 +63,7 @@ export async function handle_middleman_penjual_self(interaction: ButtonInteracti
           ],
         }),
       ],
-    }), ephemeral: true,
+    }),
   })
   
   return true
@@ -71,6 +71,14 @@ export async function handle_middleman_penjual_self(interaction: ButtonInteracti
 
 export async function handle_middleman_pembeli_self(interaction: ButtonInteraction): Promise<boolean> {
   if (!interaction.customId.startsWith("middleman_pembeli_self:")) return false
+
+  if (await fetch_maintenance_mode()) {
+    await interaction.reply({
+      ...build_ticket_critical_error_reply(),
+      ephemeral: true,
+    })
+    return true
+  }
 
   const parts = interaction.customId.split(":")
   const range_id = parts[1]
