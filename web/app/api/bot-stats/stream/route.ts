@@ -41,19 +41,23 @@ async function measure_db_latency(): Promise<number> {
 // - 拉取机器人当前统计快照 - \\
 // - fetch current bot stats snapshot - \\
 async function fetch_snapshot(): Promise<object> {
-  const fetch_start = Date.now()
+  // - 独立计时，避免 DB 延迟污染 bot fetch 时间 - \\
+  // - independently timed so DB latency doesn't contaminate api_latency - \\
+  const bot_start   = Date.now()
+  const bot_promise = fetch(`${__bot_url}/api/bot-stats`, {
+    signal: AbortSignal.timeout(6000),
+  }).then(r => ({ response: r, latency: Date.now() - bot_start }))
 
-  const [db_result, bot_result] = await Promise.allSettled([
+  const [db_result, bot_timed] = await Promise.allSettled([
     measure_db_latency(),
-    fetch(`${__bot_url}/api/bot-stats`, {
-      signal: AbortSignal.timeout(6000),
-    }),
+    bot_promise,
   ])
 
-  const api_latency = Date.now() - fetch_start
-  const db_latency  = db_result.status === 'fulfilled' ? db_result.value : -1
+  const db_latency  = db_result.status   === 'fulfilled' ? db_result.value           : -1
+  const api_latency = bot_timed.status   === 'fulfilled' ? bot_timed.value.latency   : -1
+  const bot_result  = bot_timed.status   === 'fulfilled' ? bot_timed.value.response  : null
 
-  if (bot_result.status === 'rejected' || !bot_result.value.ok) {
+  if (!bot_result || !bot_result.ok) {
     return {
       status          : 'offline',
       bot_ready       : false,
@@ -68,7 +72,7 @@ async function fetch_snapshot(): Promise<object> {
     }
   }
 
-  const raw = await bot_result.value.json()
+  const raw = await bot_result.json()
   return {
     status          : raw.status ?? 'offline',
     bot_ready       : raw.bot_ready ?? false,

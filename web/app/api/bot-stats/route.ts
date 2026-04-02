@@ -78,21 +78,25 @@ async function measure_db_latency(): Promise<number> {
  * @returns {bot_stats_payload}
  */
 export async function GET() {
-  const fetch_start = Date.now()
+  // - 独立计时，避免 DB 延迟污染 bot fetch 时间 - \\
+  // - independently timed so DB latency doesn't contaminate api_latency - \\
+  const bot_start   = Date.now()
+  const bot_promise = fetch(`${__bot_url}/api/bot-stats`, {
+    signal: AbortSignal.timeout(8000),
+    next  : { revalidate: 0 },
+  }).then(r => ({ response: r, latency: Date.now() - bot_start }))
 
-  const [db_latency_result, bot_response] = await Promise.allSettled([
+  const [db_latency_result, bot_timed] = await Promise.allSettled([
     measure_db_latency(),
-    fetch(`${__bot_url}/api/bot-stats`, {
-      signal: AbortSignal.timeout(8000),
-      next  : { revalidate: 0 },
-    }),
+    bot_promise,
   ])
 
-  const api_latency = Date.now() - fetch_start
   const db_latency  = db_latency_result.status === 'fulfilled' ? db_latency_result.value : -1
+  const api_latency = bot_timed.status === 'fulfilled' ? bot_timed.value.latency : -1
+  const bot_response = bot_timed.status === 'fulfilled' ? bot_timed.value.response : null
 
   // - bot unreachable - \\
-  if (bot_response.status === 'rejected' || !bot_response.value.ok) {
+  if (!bot_response || !bot_response.ok) {
     const payload: bot_stats_payload = {
       status          : 'offline',
       bot_ready       : false,
@@ -114,7 +118,7 @@ export async function GET() {
     return NextResponse.json(payload, { headers: { 'Cache-Control': 'no-store' } })
   }
 
-  const raw = await bot_response.value.json()
+  const raw = await bot_response.json()
 
   const payload: bot_stats_payload = {
     status          : raw.status          ?? 'offline',
