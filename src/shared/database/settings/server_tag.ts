@@ -467,6 +467,11 @@ export async function scan_banned_tags_on_startup(client: Client): Promise<void>
         if (is_using_banned && !quarantine_data) {
           // - 成员有禁止标签但未被隔离，对其执行隔离 - \\
           // - member has banned tag but not quarantined → quarantine - \\
+          if (!member.manageable) {
+            console.log(`[ - SERVER TAG GUARD - ] Skipping ${user.username} — cannot manage (higher role or owner)`)
+            continue
+          }
+
           const quarantine_role = await guild.roles.fetch(__quarantine_role_id).catch(() => null)
           if (!quarantine_role) continue
 
@@ -525,6 +530,11 @@ export async function scan_banned_tags_on_startup(client: Client): Promise<void>
         } else if (!is_using_banned && quarantine_data?.quarantined_by === __auto_tag_quarantine_by) {
           // - 成员已不再使用禁止标签但仍被自动隔离，解除隔离 - \\
           // - member no longer has banned tag but still auto-quarantined → release - \\
+          if (!member.manageable) {
+            console.log(`[ - SERVER TAG GUARD - ] Skipping release for ${user.username} — cannot manage`)
+            continue
+          }
+
           const guild_roles_map                 = await guild.roles.fetch().catch(() => null)
           const { managed: managed_roles }      = await get_member_roles(member, guild)
           const valid_roles = guild_roles_map
