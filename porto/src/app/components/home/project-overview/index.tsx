@@ -43,7 +43,8 @@ const ProjectOverview = () => {
                         alt="tile-icon"
                         width={24}
                         height={24}
-                          className="group-hover:translate-x-1.5 group-hover:rotate-45 transition-all duration-300 ease-in dark:invert"
+                        style={{ width: "auto", height: "auto" }}
+                        className="group-hover:translate-x-1.5 group-hover:rotate-45 transition-all duration-300 ease-in dark:invert"
                       />
                     </Link>
                   );
@@ -72,6 +73,7 @@ const ProjectOverview = () => {
                           alt="tile-icon"
                           width={24}
                           height={24}
+                          style={{ width: "auto", height: "auto" }}
                           className="group-hover:translate-x-1.5 group-hover:rotate-45 transition-all duration-300 ease-in dark:invert"
                         />
                       ) : (

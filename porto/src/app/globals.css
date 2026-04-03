@@ -70,6 +70,10 @@ body {
 }
 
 @layer base {
+  img {
+    height: auto;
+  }
+
   h1 {
     @apply text-2xl md:text-3xl lg:text-[32px] font-normal text-primary;
   }

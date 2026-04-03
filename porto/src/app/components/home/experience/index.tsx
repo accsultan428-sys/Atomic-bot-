@@ -44,7 +44,7 @@ const Experience = () => {
                       alt="icon"
                       width={32}
                       height={32}
-                      className="w-8 h-auto dark:invert"
+                      className="w-8 dark:invert"
                     />
                     <div className="flex flex-wrap gap-5 items-center justify-between">
                       <h5>{value?.role}</h5>
