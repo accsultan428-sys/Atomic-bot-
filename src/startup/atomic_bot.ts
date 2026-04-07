@@ -66,6 +66,8 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildVoiceStates,
+    GatewayIntentBits.GuildModeration,
+    GatewayIntentBits.GuildWebhooks,
   ],
   partials: [
     Partials.Message,
@@ -132,6 +134,13 @@ import "@atomic/discord/events/guild_member/guild_member_booster"
 import "@atomic/discord/events/voice/voice_state_update"
 import "@atomic/discord/events/message/message_delete"
 import "@atomic/discord/events/message/executor_update"
+import "@atomic/discord/events/anti_nuke/channel_delete.event"
+import "@atomic/discord/events/anti_nuke/channel_create.event"
+import "@atomic/discord/events/anti_nuke/role_delete.event"
+import "@atomic/discord/events/anti_nuke/role_create.event"
+import "@atomic/discord/events/anti_nuke/guild_ban_add.event"
+import "@atomic/discord/events/anti_nuke/guild_member_remove.event"
+import "@atomic/discord/events/anti_nuke/webhook_update.event"
 
 /**
  * - 进语音频道，断了会自动重连，主打一个稳 - \\

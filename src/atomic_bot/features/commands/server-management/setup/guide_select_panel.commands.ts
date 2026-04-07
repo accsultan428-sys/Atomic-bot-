@@ -53,6 +53,11 @@ export const command: Command = {
                 value:       "submit-payment",
                 description: "Tutorial submit payment",
               },
+              {
+                label:       "Staff Guidelines",
+                value:       "staff",
+                description: "Panduan & ketentuan untuk staff",
+              },
             ]),
           ],
         }),

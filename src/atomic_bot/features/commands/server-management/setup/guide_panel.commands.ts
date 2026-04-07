@@ -82,9 +82,10 @@ export const command: Command = {
         .setDescription("Guide type")
         .setRequired(true)
         .addChoices(
-          { name: "Submit Payment", value: "submit-payment" },
-          { name: "Purchase Ticket", value: "ticket" },
-          { name: "Helper Ticket", value: "helper" },
+          { name: "Submit Payment",   value: "submit-payment" },
+          { name: "Purchase Ticket",  value: "ticket"         },
+          { name: "Helper Ticket",    value: "helper"         },
+          { name: "Staff Guidelines", value: "staff"          },
         )
     ) as SlashCommandBuilder,
 

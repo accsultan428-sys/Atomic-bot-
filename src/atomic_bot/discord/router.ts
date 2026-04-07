@@ -34,6 +34,7 @@ import { error_handler }                                                  from "
 
 import { handle_role_permission_select }                                   from "@atomic/features/commands/server-util/utility/get_role_permission.commands"
 import { get_button_module, get_modal_module, get_select_menu_module }     from "./interaction-registry"
+import { handle_anti_nuke_undo }                                            from "@atomic/features/commands/moderation/anti-nuke/buttons/anti_nuke.button"
 
 const stats_select           = get_select_menu_module("stats")
 const guide_select           = get_select_menu_module("guide")
@@ -351,6 +352,13 @@ export async function handle_interaction(
       // - anti spam stuff handled inline - \\
       if (interaction.customId.startsWith("anti_spam_")) {
         await handle_anti_spam_button(interaction, client)
+        return
+      }
+
+      // - anti-nuke undo 按钮 - \\
+      // - anti-nuke undo button - \\
+      if (interaction.customId.startsWith("anti_nuke_undo:")) {
+        await handle_anti_nuke_undo(interaction)
         return
       }
 

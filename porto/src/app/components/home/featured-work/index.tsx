@@ -163,8 +163,8 @@ function ProjectDetailContent({ item }: { item: FeatureWorkItem }) {
 
       {/* close button (bottom) */}
       <DialogFooter>
-        <DialogClose className="inline-flex">
-          <Button variant="outline" className="h-auto py-2.5 px-5 pointer-events-none">
+        <DialogClose as="div" className="inline-flex">
+          <Button variant="outline" className="h-auto py-2.5 px-5">
             Close
           </Button>
         </DialogClose>
