@@ -751,11 +751,11 @@ export function LandingPage() {
                 transition={{ delay: 0.6 }}
                 className="mt-2 text-[#2e2e2e] text-[0.7rem]"
               >
-                check the{' '}
-                <a href="/terms-of-service" className="hover:text-[#555] underline underline-offset-2 transition-colors">
-                  terms of service
-                </a>{' '}
-                if you want
+                <a href="/terms-of-service" className="hover:text-[#555] underline underline-offset-2 transition-colors">terms of service</a>
+                {' · '}
+                <a href="/privacy-policy" className="hover:text-[#555] underline underline-offset-2 transition-colors">privacy policy</a>
+                {' · '}
+                <a href="/license" className="hover:text-[#555] underline underline-offset-2 transition-colors">license</a>
               </motion.p>
             </div>
           </div>
@@ -1139,11 +1139,11 @@ export function LandingPage() {
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
                 className="text-[#2e2e2e] text-[0.7rem]"
               >
-                check the{' '}
-                <a href="/terms-of-service" className="hover:text-[#555] underline underline-offset-2 transition-colors">
-                  terms of service
-                </a>{' '}
-                if you want
+                <a href="/terms-of-service" className="hover:text-[#555] underline underline-offset-2 transition-colors">terms of service</a>
+                {' · '}
+                <a href="/privacy-policy" className="hover:text-[#555] underline underline-offset-2 transition-colors">privacy policy</a>
+                {' · '}
+                <a href="/license" className="hover:text-[#555] underline underline-offset-2 transition-colors">license</a>
               </motion.p>
             </div>
           </div>

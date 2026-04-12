@@ -33,7 +33,6 @@ export default function TermsOfServicePage() {
         </h1>
         <p className="text-sm text-[#666] mb-10">Last updated: April 12, 2026</p>
 
-        <hr className="border-[#222] mb-10" />
 
         {/* - sections - \\ */}
         <div className="flex flex-col gap-9">
