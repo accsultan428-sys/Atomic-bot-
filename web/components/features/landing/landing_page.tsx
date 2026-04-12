@@ -321,19 +321,19 @@ function WelcomeBlob({
   )
 }
 
-function WelcomeAnimation({ on_done }: { on_done: () => void }) {
+function WelcomeAnimation({ on_done, sfx_ref }: { on_done: () => void; sfx_ref: React.RefObject<HTMLAudioElement | null> }) {
   useEffect(() => {
     const t = setTimeout(on_done, 3000)
     return () => clearTimeout(t)
   }, [on_done])
 
-  // - play sfx immediately — mount is triggered by user click, so autoplay is allowed - \\
+  // - play the preloaded sfx — already buffered by LandingPage on mount - \\
   useEffect(() => {
-    const sfx   = new Audio('/startup-sfx-atmc.mp3')
-    sfx.volume  = 1
-    sfx.preload = 'auto'
+    const sfx = sfx_ref.current
+    if (!sfx) return
+    sfx.currentTime = 0
     sfx.play().catch(() => {})
-    return () => { sfx.pause(); sfx.src = '' }
+    return () => { sfx.pause(); sfx.currentTime = 0 }
   }, [])
 
   return (
@@ -380,6 +380,17 @@ export function LandingPage() {
   const [card_hovered,  set_card_hovered]  = useState(false)
   const touch_start                    = useRef<number>(0)
   const container_ref                  = useRef<HTMLDivElement>(null)
+  const sfx_ref                        = useRef<HTMLAudioElement | null>(null)
+
+  // - preload sfx while touch gate is visible so it plays instantly on welcome - \\
+  useEffect(() => {
+    const sfx   = new Audio('/startup-sfx-atmc.mp3')
+    sfx.volume  = 1
+    sfx.preload = 'auto'
+    sfx.load()
+    sfx_ref.current = sfx
+    return () => { sfx.pause(); sfx.src = '' }
+  }, [])
 
   // - navigate to a section - \\
   const go_to = useCallback((idx: number) => {
@@ -502,7 +513,7 @@ export function LandingPage() {
 
       {/* - welcome intro overlay - \\ */}
       <AnimatePresence>
-        {touched && !intro_done && <WelcomeAnimation on_done={() => set_intro_done(true)} />}
+        {touched && !intro_done && <WelcomeAnimation on_done={() => set_intro_done(true)} sfx_ref={sfx_ref} />}
       </AnimatePresence>
 
       {/* - ambient glow blobs, per-section - \\ */}
