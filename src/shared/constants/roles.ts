@@ -20,6 +20,8 @@ export const __loa_manager_roles: string[] = [
   "1273229155151904852",
 ]
 
+export const __phishing_mod_role_id = "1250807040209715341"
+
 export const __middleman_staff_ids: string[] = [
   "1118453649727823974",
   "713377329623072822",

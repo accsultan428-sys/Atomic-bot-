@@ -19,6 +19,8 @@ import type { MessageContextMenuCommand } from "@shared/types/command"
 import { component }                      from "@utils"
 import { log_error }                      from "@utils/error_logger"
 import { is_admin, is_staff }             from "@database/settings/permissions"
+import { member_has_role }                from "@utils/discord_api"
+import { __phishing_mod_role_id }         from "@constants/roles"
 
 // - 1 day in seconds - \\
 const __softban_delete_seconds = 1 * 24 * 60 * 60
@@ -58,7 +60,7 @@ const phising_softban: MessageContextMenuCommand = {
       return
     }
 
-    if (!is_admin(executor) && !is_staff(executor) && !executor.permissions.has(PermissionFlagsBits.BanMembers)) {
+    if (!is_admin(executor) && !is_staff(executor) && !member_has_role(executor, __phishing_mod_role_id) && !executor.permissions.has(PermissionFlagsBits.BanMembers)) {
       await interaction.reply({ ...build_message(["You do not have permission to use this command."]), ephemeral: true})
       return
     }
