@@ -1,6 +1,6 @@
 'use client'
 
-import { FloatingDock }                                                                        from '@/components/ui/floating-dock'
+import { FloatingDock }                                                               from '@/components/ui/floating-dock'
 import { IconLink, IconList, IconBrandDiscord, IconRobot, IconHeart, IconShieldLock } from '@tabler/icons-react'
 
 const __discord_url    = process.env.NEXT_PUBLIC_DISCORD_URL    || 'https://discord.gg/getsades'
